@@ -49,3 +49,37 @@ coverage/
 !/backend/public/uploads/.gitkeep
 /backend/storage/app/public/*
 !/backend/storage/app/public/.gitkeep
+
+# ===========================================
+# ARCHIVOS SENSIBLES Y BINARIOS - NO SUBIR
+# ===========================================
+
+# Tools y binarios locales (PHP, Composer portable)
+/tools/
+*.exe
+*.dll
+*.phar
+*.zip
+*.rar
+*.7z
+
+# Archivos de credenciales
+**/credentials*
+**/secrets*
+**/*_key*
+**/*_secret*
+
+# Backups de base de datos
+*.sql
+*.sql.gz
+*.dump
+
+# Certificados SSL
+*.pem
+*.key
+*.crt
+*.p12
+
+# Archivos de configuración local
+*.local.php
+*.local.json
