@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\TenantApiController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,19 +15,28 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Rutas de API REST para la tienda multitenancy.
-| Todas las rutas requieren el parámetro {tenant} para identificar la tienda.
+| Rate limiting aplicado para prevenir abuso.
 |
 */
 
+// Configurar rate limiting
+RateLimiter::for('api', function ($request) {
+    return Limit::perMinute(60)->by($request->ip());
+});
+
+RateLimiter::for('orders', function ($request) {
+    return Limit::perMinute(10)->by($request->ip());
+});
+
 Route::prefix('v1/{tenant}')
-    ->middleware('tenant')
+    ->middleware(['tenant', 'throttle:api'])
     ->name('api.')
     ->group(function () {
 
         // Información de la tienda
         Route::get('/', [TenantApiController::class, 'info'])->name('tenant.info');
 
-        // Productos
+        // Productos (solo lectura, más permisivo)
         Route::prefix('products')->name('products.')->group(function () {
             Route::get('/', [ProductApiController::class, 'index'])->name('index');
             Route::get('/featured', [ProductApiController::class, 'featured'])->name('featured');
@@ -33,7 +44,7 @@ Route::prefix('v1/{tenant}')
             Route::get('/{identifier}', [ProductApiController::class, 'show'])->name('show');
         });
 
-        // Categorías
+        // Categorías (solo lectura)
         Route::prefix('categories')->name('categories.')->group(function () {
             Route::get('/', [CategoryApiController::class, 'index'])->name('index');
             Route::get('/tree', [CategoryApiController::class, 'tree'])->name('tree');
@@ -41,7 +52,7 @@ Route::prefix('v1/{tenant}')
             Route::get('/{slug}/products', [CategoryApiController::class, 'products'])->name('products');
         });
 
-        // Carrito
+        // Carrito (rate limit moderado)
         Route::prefix('cart')->name('cart.')->group(function () {
             Route::get('/', [CartApiController::class, 'show'])->name('show');
             Route::post('/add', [CartApiController::class, 'add'])->name('add');
@@ -50,11 +61,15 @@ Route::prefix('v1/{tenant}')
             Route::post('/clear', [CartApiController::class, 'clear'])->name('clear');
         });
 
-        // Pedidos
-        Route::prefix('orders')->name('orders.')->group(function () {
+        // Pedidos (rate limit estricto)
+        Route::prefix('orders')->middleware('throttle:orders')->name('orders.')->group(function () {
             Route::post('/', [OrderApiController::class, 'store'])->name('store');
             Route::get('/payment-methods', [OrderApiController::class, 'paymentMethods'])->name('payment-methods');
             Route::get('/{orderNumber}', [OrderApiController::class, 'show'])->name('show');
-            Route::post('/{order}/webhook', [OrderApiController::class, 'webhook'])->name('webhook');
         });
     });
+
+// Webhooks (sin rate limit, pero verificación de firma)
+Route::post('webhook/{tenant}/{gateway}', [OrderApiController::class, 'webhook'])
+    ->middleware('tenant')
+    ->name('api.webhook');
