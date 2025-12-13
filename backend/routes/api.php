@@ -6,8 +6,6 @@ use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\TenantApiController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,15 +16,6 @@ use Illuminate\Support\Facades\RateLimiter;
 | Rate limiting aplicado para prevenir abuso.
 |
 */
-
-// Configurar rate limiting
-RateLimiter::for('api', function ($request) {
-    return Limit::perMinute(60)->by($request->ip());
-});
-
-RateLimiter::for('orders', function ($request) {
-    return Limit::perMinute(10)->by($request->ip());
-});
 
 Route::prefix('v1/{tenant}')
     ->middleware(['tenant', 'throttle:api'])
