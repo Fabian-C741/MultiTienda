@@ -62,9 +62,10 @@ class OrderApiController extends Controller
         // Verificar stock de todos los productos
         foreach ($cart->items as $item) {
             if (!$item->product || $item->product->stock < $item->quantity) {
+                $productName = $item->product ? $item->product->name : 'Producto no disponible';
                 return response()->json([
                     'success' => false,
-                    'message' => "Stock insuficiente para: {$item->product?->name ?? 'Producto no disponible'}",
+                    'message' => "Stock insuficiente para: {$productName}",
                 ], 400);
             }
         }
