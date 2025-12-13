@@ -58,7 +58,8 @@ class CheckoutController extends Controller
         // Verificar stock
         foreach ($cart->items as $item) {
             if (!$item->product || !$item->product->isInStock() || $item->product->stock < $item->quantity) {
-                return back()->with('error', "El producto '{$item->product?->name}' no tiene stock suficiente.");
+                $productName = $item->product ? $item->product->name : 'Producto';
+                return back()->with('error', "El producto '{$productName}' no tiene stock suficiente.");
             }
         }
 

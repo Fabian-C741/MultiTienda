@@ -23,7 +23,7 @@ class EnsureTenantAdmin
 
         if (!$guard->check()) {
             $tenant = $this->tenantManager->current();
-            $slug = $tenant ? $tenant->slug : $request->route('tenant');
+            $slug = $tenant?->slug ?? $request->route('tenant');
 
             return Redirect::route('tenant.login.show', ['tenant' => $slug]);
         }

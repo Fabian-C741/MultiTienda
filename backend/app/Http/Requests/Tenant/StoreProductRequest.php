@@ -11,8 +11,8 @@ class StoreProductRequest extends FormRequest
     public function authorize(): bool
     {
         $tenant = $this->route('tenant');
-        $user = $this->user('tenant');
-        return $user ? $user->isTenantAdminFor($tenant) : false;
+
+        return $this->user('tenant')?->isTenantAdminFor($tenant) ?? false;
     }
 
     public function rules(): array
