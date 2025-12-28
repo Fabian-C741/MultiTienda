@@ -26,7 +26,6 @@ Route::prefix('central')
     ->middleware('prevent-central-access')
     ->group(function () {
         Route::get('/', [CentralTenantController::class, 'dashboard'])->name('dashboard');
-        Route::get('/dashboard', [CentralTenantController::class, 'dashboard'])->name('dashboard');
         Route::resource('tenants', CentralTenantController::class);
         Route::post('tenants/{tenant}/suspend', [CentralTenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('tenants/{tenant}/activate', [CentralTenantController::class, 'activate'])->name('tenants.activate');
