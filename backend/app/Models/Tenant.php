@@ -14,13 +14,17 @@ class Tenant extends Model
 
     protected $fillable = [
         'name',
-        'slug',
+        'slug', 
+        'subdomain',
+        'description',
         'domain',
         'database',
         'database_host',
         'database_port',
         'database_username',
         'database_password',
+        'plan',
+        'status',
         'settings',
         'is_active',
     ];

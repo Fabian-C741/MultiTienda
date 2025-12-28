@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Central\TenantController as CentralTenantController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\TenantController as AdminTenantController;
@@ -16,11 +17,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/central/dashboard');
 });
+
+// Rutas centrales para gestión de tenants (sin contexto de tenant)
+Route::prefix('central')
+    ->name('central.')
+    ->middleware('prevent-central-access')
+    ->group(function () {
+        Route::get('/', [CentralTenantController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [CentralTenantController::class, 'dashboard'])->name('dashboard');
+        Route::resource('tenants', CentralTenantController::class);
+        Route::post('tenants/{tenant}/suspend', [CentralTenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('tenants/{tenant}/activate', [CentralTenantController::class, 'activate'])->name('tenants.activate');
+        Route::delete('tenants/{tenant}', [CentralTenantController::class, 'destroy'])->name('tenants.destroy');
+        Route::post('tenants/bulk-activate', [CentralTenantController::class, 'bulkActivate'])->name('tenants.bulk-activate');
+        Route::post('tenants/bulk-suspend', [CentralTenantController::class, 'bulkSuspend'])->name('tenants.bulk-suspend');
+        Route::delete('tenants/bulk-delete', [CentralTenantController::class, 'bulkDelete'])->name('tenants.bulk-delete');
+        Route::get('stats', [CentralTenantController::class, 'stats'])->name('stats');
+    });
 
 Route::prefix('admin')
     ->name('admin.')
+    ->middleware('prevent-central-access')
     ->group(function () {
         Route::middleware('guest')->group(function () {
             Route::get('login', [AdminAuthController::class, 'showLogin'])->name('login');
@@ -40,8 +59,9 @@ Route::prefix('admin')
 
 Route::prefix(config('tenancy.path_identifier'))
     ->as('tenant.')
+    ->middleware('initialize-tenancy')
     ->group(function () {
-        Route::middleware('tenant')->group(function () {
+        Route::middleware('ensure-tenant-context')->group(function () {
             Route::get('/{tenant}/status', function (Request $request, Tenant $tenant, TenantManager $tenantManager) {
                 return response()->json([
                     'tenant' => [

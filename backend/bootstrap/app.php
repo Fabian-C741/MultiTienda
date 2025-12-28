@@ -3,6 +3,10 @@
 use App\Http\Middleware\EnsureTenant;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantAdmin;
+use App\Http\Middleware\EnsureTenantContext;
+use App\Http\Middleware\InitializeTenancy;
+use App\Http\Middleware\PreventCentralAccess;
+use App\Http\Middleware\TenantUserAccess;
 use App\Http\Middleware\Authenticate as AppAuthenticate;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
@@ -26,6 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant-admin' => EnsureTenantAdmin::class,
             'guest' => RedirectIfAuthenticated::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'initialize-tenancy' => InitializeTenancy::class,
+            'ensure-tenant-context' => EnsureTenantContext::class,
+            'prevent-central-access' => PreventCentralAccess::class,
+            'tenant-user-access' => TenantUserAccess::class,
         ]);
 
         // Protección CSRF para formularios web

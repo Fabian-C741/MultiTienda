@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\TenantApiController;
+use App\Http\Controllers\Central\TenantController as CentralTenantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,8 +18,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// API Central para gestión de tenants (sin contexto de tenant)
+Route::prefix('v1/central')
+    ->middleware(['api', 'throttle:api'])
+    ->name('api.central.')
+    ->group(function () {
+        Route::apiResource('tenants', CentralTenantController::class);
+        Route::patch('tenants/{tenant}/toggle-status', [CentralTenantController::class, 'toggleStatus']);
+        Route::get('stats', [CentralTenantController::class, 'stats']);
+    });
+
 Route::prefix('v1/{tenant}')
-    ->middleware(['tenant', 'throttle:api'])
+    ->middleware(['initialize-tenancy', 'ensure-tenant-context', 'throttle:api'])
     ->name('api.')
     ->group(function () {
 
@@ -60,5 +71,5 @@ Route::prefix('v1/{tenant}')
 
 // Webhooks (sin rate limit, pero verificación de firma)
 Route::post('webhook/{tenant}/{gateway}', [OrderApiController::class, 'webhook'])
-    ->middleware('tenant')
+    ->middleware('initialize-tenancy')
     ->name('api.webhook');
