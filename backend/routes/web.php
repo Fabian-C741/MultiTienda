@@ -23,7 +23,6 @@ Route::get('/', function () {
 // Rutas centrales para gestión de tenants (sin contexto de tenant)
 Route::prefix('central')
     ->name('central.')
-    ->middleware('prevent-central-access')
     ->group(function () {
         Route::get('/', [CentralTenantController::class, 'dashboard'])->name('dashboard');
         Route::resource('tenants', CentralTenantController::class);
