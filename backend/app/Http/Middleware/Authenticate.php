@@ -16,12 +16,22 @@ class Authenticate extends Middleware
             return null;
         }
 
+        // Verificar si es una ruta de tenant y tiene el parámetro
         if ($request->routeIs('tenant.*')) {
             $tenant = $request->route('tenant');
-
-            return $tenant ? route('tenant.login.show', ['tenant' => $tenant]) : url('/');
+            
+            if ($tenant) {
+                // Si tenemos el tenant, redirigir al login del tenant
+                return route('tenant.login.show', ['tenant' => $tenant]);
+            }
         }
 
-        return route('admin.login');
+        // Para rutas admin o cuando no hay tenant válido
+        if ($request->routeIs('admin.*') || $request->is('admin/*')) {
+            return route('admin.login');
+        }
+
+        // Fallback a la página principal
+        return url('/');
     }
 }
