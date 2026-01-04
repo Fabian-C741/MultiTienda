@@ -1,4 +1,11 @@
-# NADA - Solo seguridad básica
+RewriteEngine On
+
+# Todas las rutas van a index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ /index.php [L,QSA]
+
+# Seguridad
 <Files "*.env">
     Deny from all
 </Files>
