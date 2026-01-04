@@ -5,31 +5,12 @@
  */
 
 require_once 'auth.php';
+require_once 'storage.php';
 
 // Determinar la ruta solicitada
 $request_uri = $_SERVER['REQUEST_URI'];
 $path = parse_url($request_uri, PHP_URL_PATH);
 $path = rtrim($path, '/');
-
-// Conectar a base de datos
-try {
-    $pdo = new PDO("mysql:host=localhost;dbname=multitienda;charset=utf8mb4", "root", "");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    // Si no hay DB, mostrar setup
-    if ($path === '/setup-db') {
-        include 'setup-database.php';
-        exit;
-    }
-    
-    echo "<!DOCTYPE html><html><head><title>Setup Requerido</title></head><body>";
-    echo "<div style='text-align:center;margin:50px;font-family:system-ui;'>";
-    echo "<h1>🔧 Setup Requerido</h1>";
-    echo "<p>La base de datos no está configurada.</p>";
-    echo "<a href='/setup-db' style='background:#667eea;color:white;padding:1rem 2rem;border-radius:8px;text-decoration:none;'>Configurar Base de Datos</a>";
-    echo "</div></body></html>";
-    exit;
-}
 
 // CSS base
 $css = '
@@ -168,10 +149,10 @@ if (strpos($path, '/super-admin') === 0) {
             <?php
             // Estadísticas generales
             $stats = [];
-            $stats['total_stores'] = $pdo->query("SELECT COUNT(*) FROM stores")->fetchColumn();
-            $stats['total_admins'] = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
-            $stats['total_products'] = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
-            $stats['total_orders'] = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+            $stats['total_stores'] = storage()->count('stores');
+            $stats['total_admins'] = storage()->count('users', 'role', 'admin');
+            $stats['total_products'] = storage()->count('products');
+            $stats['total_orders'] = storage()->count('orders');
             ?>
             
             <div class="dashboard-grid">
@@ -196,13 +177,16 @@ if (strpos($path, '/super-admin') === 0) {
             <div class="card">
                 <h2>🏬 Tiendas Recientes</h2>
                 <?php
-                $stores = $pdo->query("
-                    SELECT s.*, u.name as admin_name 
-                    FROM stores s 
-                    JOIN users u ON s.admin_id = u.id 
-                    ORDER BY s.created_at DESC 
-                    LIMIT 5
-                ")->fetchAll();
+                $stores = storage()->load('stores');
+                // Simular JOIN con usuarios
+                foreach ($stores as &$store) {
+                    $admin = storage()->find('users', 'id', $store['admin_id']);
+                    $store['admin_name'] = $admin ? $admin['name'] : 'Usuario eliminado';
+                }
+                unset($store); // Limpiar referencia
+                
+                // Limitar a 5 más recientes
+                $stores = array_slice(array_reverse($stores), 0, 5);
                 ?>
                 <table class="table">
                     <thead>
@@ -246,9 +230,7 @@ if (strpos($path, '/admin') === 0 && $path !== '/admin@multitienda.com') {
     
     // Panel Admin de Tienda
     $user = auth()->getUser();
-    $store = $pdo->prepare("SELECT * FROM stores WHERE admin_id = ?");
-    $store->execute([$user['id']]);
-    $store = $store->fetch();
+    $store = storage()->find('stores', 'admin_id', $user['id']);
     
     if (!$store) {
         echo "No tienes una tienda asignada. Contacta al super administrador.";
@@ -283,17 +265,17 @@ if (strpos($path, '/admin') === 0 && $path !== '/admin@multitienda.com') {
             <?php
             // Estadísticas de la tienda
             $store_stats = [];
-            $store_stats['products'] = $pdo->prepare("SELECT COUNT(*) FROM products WHERE store_id = ?");
-            $store_stats['products']->execute([$store['id']]);
-            $store_stats['products'] = $store_stats['products']->fetchColumn();
+            $store_stats['products'] = storage()->count('products', 'store_id', $store['id']);
+            $store_stats['orders'] = storage()->count('orders', 'store_id', $store['id']);
             
-            $store_stats['orders'] = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE store_id = ?");
-            $store_stats['orders']->execute([$store['id']]);
-            $store_stats['orders'] = $store_stats['orders']->fetchColumn();
-            
-            $store_stats['revenue'] = $pdo->prepare("SELECT SUM(total) FROM orders WHERE store_id = ? AND payment_status = 'paid'");
-            $store_stats['revenue']->execute([$store['id']]);
-            $store_stats['revenue'] = $store_stats['revenue']->fetchColumn() ?: 0;
+            // Calcular ingresos
+            $orders = storage()->findAll('orders', 'store_id', $store['id']);
+            $store_stats['revenue'] = 0;
+            foreach ($orders as $order) {
+                if (isset($order['payment_status']) && $order['payment_status'] === 'paid') {
+                    $store_stats['revenue'] += floatval($order['total'] ?? 0);
+                }
+            }
             ?>
             
             <div class="dashboard-grid">
@@ -365,12 +347,9 @@ if ($path === '' || $path === '/') {
             <div class="card">
                 <h2>🏬 Tiendas Disponibles</h2>
                 <?php
-                $public_stores = $pdo->query("
-                    SELECT * FROM stores 
-                    WHERE status = 'active' 
-                    ORDER BY created_at DESC 
-                    LIMIT 6
-                ")->fetchAll();
+                $public_stores = storage()->findAll('stores', 'status', 'active');
+                // Limitar a 6
+                $public_stores = array_slice($public_stores, 0, 6);
                 ?>
                 
                 <?php if (empty($public_stores)): ?>
@@ -398,18 +377,27 @@ if ($path === '' || $path === '/') {
 if (preg_match('/^\/store\/([a-zA-Z0-9-]+)$/', $path, $matches)) {
     $store_slug = $matches[1];
     
-    $store = $pdo->prepare("SELECT * FROM stores WHERE slug = ? AND status = 'active'");
-    $store->execute([$store_slug]);
-    $store = $store->fetch();
+    $store = storage()->find('stores', 'slug', $store_slug);
     
-    if (!$store) {
+    if (!$store || $store['status'] !== 'active') {
         echo "Tienda no encontrada";
         exit;
     }
     
-    $products = $pdo->prepare("SELECT * FROM products WHERE store_id = ? AND status = 'active' ORDER BY featured DESC, created_at DESC");
-    $products->execute([$store['id']]);
-    $products = $products->fetchAll();
+    $products = storage()->findAll('products', 'store_id', $store['id']);
+    // Filtrar solo productos activos y ordenar
+    $products = array_filter($products, function($p) {
+        return isset($p['status']) && $p['status'] === 'active';
+    });
+    
+    // Ordenar por featured primero
+    usort($products, function($a, $b) {
+        $aFeatured = isset($a['featured']) && $a['featured'];
+        $bFeatured = isset($b['featured']) && $b['featured'];
+        if ($aFeatured && !$bFeatured) return -1;
+        if (!$aFeatured && $bFeatured) return 1;
+        return 0;
+    });
     
     ?>
     <!DOCTYPE html>
