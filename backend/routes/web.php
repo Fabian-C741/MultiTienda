@@ -16,8 +16,17 @@ use App\Services\Tenancy\TenantManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// TEST DIRECTO - Sin prefijos ni middlewares
+Route::get('/test', function () {
+    return '<h1>🎯 TEST FUNCIONA</h1><p>Laravel conectado correctamente</p>';
+});
+
 Route::get('/', function () {
-    return redirect('/central/dashboard');
+    return '<h1>🎉 MultiTienda Home</h1><p>Sitio principal funcionando</p><ul><li><a href="/test">Test</a></li><li><a href="/central">Central</a></li></ul>';
+});
+
+Route::get('/central', function () {
+    return '<h1>📊 Panel Central</h1><p>Dashboard central funcionando</p>';
 });
 
 // Ruta de prueba simple
