@@ -18,14 +18,17 @@ class CreateTestTenant extends Command
         $columns = \DB::getSchemaBuilder()->getColumnListing('tenants');
         $this->info("Columnas disponibles: " . implode(', ', $columns));
 
-        // Datos base que siempre debería tener
+        // Datos base - solo name y slug son realmente requeridos
         $data = [
             'name' => 'Tienda Demo',
             'slug' => 'demo',
-            'status' => 'active',
         ];
 
         // Agregar columnas opcionales solo si existen
+        if (in_array('status', $columns)) {
+            $data['status'] = 'active';
+        }
+
         if (in_array('subdomain', $columns)) {
             $data['subdomain'] = 'demo';
         }
