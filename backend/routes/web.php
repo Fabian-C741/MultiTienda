@@ -16,22 +16,16 @@ use App\Services\Tenancy\TenantManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// TEST DIRECTO - Sin prefijos ni middlewares
-Route::get('/test', function () {
-    return '<h1>🎯 TEST FUNCIONA</h1><p>Laravel conectado correctamente</p>';
-});
+/*
+|--------------------------------------------------------------------------
+| Web Routes - MultiTienda System
+|--------------------------------------------------------------------------
+*/
 
+// Página principal del sistema
 Route::get('/', function () {
-    return '<h1>🎉 MultiTienda Home</h1><p>Sitio principal funcionando</p><ul><li><a href="/test">Test</a></li><li><a href="/central">Central</a></li></ul>';
-});
-
-Route::get('/central', function () {
-    return '<h1>📊 Panel Central</h1><p>Dashboard central funcionando</p>';
-});
-
-// Ruta de prueba simple
-Route::get('/central/dashboard', function () {
-    return '<h1>🎉 MultiTienda Funciona!</h1><p>Panel Central funcionando correctamente.</p><ul><li><a href="/tienda/demo">Tienda Demo</a></li><li><a href="/tienda/demo/admin">Admin Demo</a></li></ul>';
+    $tenants = \App\Models\Tenant::where('status', 'active')->take(5)->get();
+    return view('multitienda-home', compact('tenants'));
 });
 
 // Rutas centrales para gestión de tenants (sin contexto de tenant)

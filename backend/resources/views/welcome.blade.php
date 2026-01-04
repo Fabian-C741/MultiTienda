@@ -4,13 +4,102 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Laravel</title>
+        <title>MultiTienda - Plataforma Multi-tenant</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Styles / Scripts -->
+        <style>
+            body {
+                font-family: 'Figtree', sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                margin: 0;
+                padding: 20px;
+                color: white;
+            }
+            
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                text-align: center;
+            }
+            
+            .logo {
+                font-size: 3rem;
+                font-weight: bold;
+                margin-bottom: 1rem;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+                margin-bottom: 2rem;
+                opacity: 0.9;
+            }
+            
+            .actions {
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                margin: 2rem 0;
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                padding: 12px 24px;
+                background: rgba(255,255,255,0.2);
+                border: 2px solid rgba(255,255,255,0.3);
+                border-radius: 8px;
+                color: white;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+            }
+            
+            .btn:hover {
+                background: rgba(255,255,255,0.3);
+                border-color: rgba(255,255,255,0.5);
+                transform: translateY(-2px);
+            }
+            
+            .tenants-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-top: 3rem;
+            }
+            
+            .tenant-card {
+                background: rgba(255,255,255,0.1);
+                border-radius: 10px;
+                padding: 20px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.2);
+                transition: all 0.3s ease;
+            }
+            
+            .tenant-card:hover {
+                transform: translateY(-5px);
+                background: rgba(255,255,255,0.15);
+            }
+            
+            .tenant-name {
+                font-size: 1.3rem;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            
+            .tenant-domain {
+                font-size: 0.9rem;
+                opacity: 0.8;
+                margin-bottom: 15px;
+            }
+        </style>
+
+        <!-- Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
