@@ -1,4 +1,6 @@
 <?php
+use Illuminate\Http\Request;
+
 echo "=== TEST BÁSICO FUNCIONANDO ===<br>";
 echo "PHP: " . phpversion() . "<br>";
 
@@ -51,7 +53,6 @@ try {
 // Test 6: Request
 echo "<br>TEST 6: Request<br>";
 try {
-    use Illuminate\Http\Request;
     $request = Request::capture();
     echo "✓ Request OK: " . $request->getPathInfo() . "<br>";
 } catch (Throwable $e) {
