@@ -24,8 +24,13 @@ use Illuminate\Support\Facades\Route;
 
 // Página principal del sistema
 Route::get('/', function () {
-    $tenants = \App\Models\Tenant::where('status', 'active')->take(5)->get();
-    return view('multitienda-home', compact('tenants'));
+    try {
+        $tenants = \App\Models\Tenant::where('status', 'active')->take(5)->get();
+        return view('multitienda-home', compact('tenants'));
+    } catch (\Exception $e) {
+        // Si no hay tabla tenants, mostrar mensaje de bienvenida
+        return view('multitienda-home', ['tenants' => collect()]);
+    }
 });
 
 // Rutas centrales para gestión de tenants (sin contexto de tenant)
