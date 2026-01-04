@@ -147,13 +147,13 @@
         <div class="subtitle">Plataforma Multi-tenant para E-commerce</div>
         
         <div class="actions">
-            <a href="/central/dashboard" class="btn">🔧 Panel Central</a>
+            <a href="/central" class="btn">🔧 Panel Central</a>
             <a href="/central/tenants" class="btn">🏪 Gestionar Tiendas</a>
-            <a href="/tiendas" class="btn">📋 Ver Todas las Tiendas</a>
+            <a href="#tiendas" class="btn" onclick="document.getElementById('tiendas-section').scrollIntoView()">📋 Ver Tiendas Disponibles</a>
         </div>
         
         @if(isset($tenants) && $tenants->count() > 0)
-            <div class="section-title">🛍️ Tiendas Disponibles</div>
+            <div class="section-title" id="tiendas-section">🛍️ Tiendas Disponibles</div>
             <div class="tenants-grid">
                 @foreach($tenants as $tenant)
                     <div class="tenant-card">
