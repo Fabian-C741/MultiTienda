@@ -237,6 +237,333 @@ if (strpos($path, '/admin') === 0 && $path !== '/admin@multitienda.com') {
         exit;
     }
     
+    // Manejar formularios POST
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($path === '/admin/products' && isset($_POST['action'])) {
+            if ($_POST['action'] === 'add_product') {
+                $new_product = [
+                    'store_id' => $store['id'],
+                    'name' => $_POST['name'],
+                    'slug' => strtolower(str_replace(' ', '-', $_POST['name'])),
+                    'description' => $_POST['description'],
+                    'price' => floatval($_POST['price']),
+                    'stock' => intval($_POST['stock']),
+                    'status' => $_POST['status'] ?? 'active',
+                    'featured' => isset($_POST['featured'])
+                ];
+                storage()->insert('products', $new_product);
+                $success_message = "Producto agregado exitosamente";
+            }
+        }
+        
+        if ($path === '/admin/design' && isset($_POST['action'])) {
+            if ($_POST['action'] === 'update_store') {
+                $updates = [
+                    'name' => $_POST['name'],
+                    'description' => $_POST['description'],
+                    'theme_color' => $_POST['theme_color']
+                ];
+                storage()->update('stores', $store['id'], $updates);
+                $store = storage()->find('stores', 'id', $store['id']); // Refresh
+                $success_message = "Tienda actualizada exitosamente";
+            }
+        }
+    }
+    
+    // Gestión de Productos
+    if ($path === '/admin/products') {
+        $products = storage()->findAll('products', 'store_id', $store['id']);
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Productos - <?= htmlspecialchars($store['name']) ?></title>
+            <?= $css ?>
+        </head>
+        <body>
+            <div class="container">
+                <nav class="navbar">
+                    <a href="/admin" class="logo">🏬 <?= htmlspecialchars($store['name']) ?></a>
+                    <div class="nav-links">
+                        <span class="nav-link">Hola, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                        <a href="/admin/products" class="nav-link" style="background:rgba(255,255,255,0.2);">Productos</a>
+                        <a href="/admin/orders" class="nav-link">Pedidos</a>
+                        <a href="/admin/design" class="nav-link">Diseño</a>
+                        <a href="/store/<?= $store['slug'] ?>" class="nav-link" target="_blank">Ver Tienda</a>
+                        <a href="/logout" class="nav-link">Cerrar Sesión</a>
+                    </div>
+                </nav>
+                
+                <h1 style="color:white;">📦 Gestión de Productos</h1>
+                
+                <?php if (isset($success_message)): ?>
+                    <div class="alert alert-success"><?= $success_message ?></div>
+                <?php endif; ?>
+                
+                <!-- Formulario para agregar producto -->
+                <div class="card">
+                    <h2>➕ Agregar Nuevo Producto</h2>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="add_product">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                            <div class="form-group">
+                                <label>Nombre del Producto</label>
+                                <input type="text" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Precio ($)</label>
+                                <input type="number" step="0.01" name="price" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <textarea name="description" rows="3"></textarea>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                            <div class="form-group">
+                                <label>Stock</label>
+                                <input type="number" name="stock" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Estado</label>
+                                <select name="status">
+                                    <option value="active">Activo</option>
+                                    <option value="draft">Borrador</option>
+                                    <option value="inactive">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="featured"> Producto Destacado
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Agregar Producto</button>
+                    </form>
+                </div>
+                
+                <!-- Lista de productos -->
+                <div class="card">
+                    <h2>📋 Mis Productos (<?= count($products) ?>)</h2>
+                    <?php if (empty($products)): ?>
+                        <p>No tienes productos aún. ¡Agrega tu primer producto arriba!</p>
+                    <?php else: ?>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?= htmlspecialchars($product['name']) ?></strong>
+                                        <?php if ($product['featured'] ?? false): ?>
+                                            <span class="badge badge-warning">Destacado</span>
+                                        <?php endif; ?>
+                                        <br><small><?= htmlspecialchars(substr($product['description'] ?? '', 0, 50)) ?>...</small>
+                                    </td>
+                                    <td>$<?= number_format($product['price'], 2) ?></td>
+                                    <td><?= $product['stock'] ?? 0 ?></td>
+                                    <td>
+                                        <span class="badge badge-<?= ($product['status'] === 'active') ? 'success' : 'warning' ?>">
+                                            <?= ucfirst($product['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn" style="padding:0.25rem 0.75rem;font-size:0.875rem;">Editar</button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+    
+    // Gestión de Pedidos
+    if ($path === '/admin/orders') {
+        $orders = storage()->findAll('orders', 'store_id', $store['id']);
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Pedidos - <?= htmlspecialchars($store['name']) ?></title>
+            <?= $css ?>
+        </head>
+        <body>
+            <div class="container">
+                <nav class="navbar">
+                    <a href="/admin" class="logo">🏬 <?= htmlspecialchars($store['name']) ?></a>
+                    <div class="nav-links">
+                        <span class="nav-link">Hola, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                        <a href="/admin/products" class="nav-link">Productos</a>
+                        <a href="/admin/orders" class="nav-link" style="background:rgba(255,255,255,0.2);">Pedidos</a>
+                        <a href="/admin/design" class="nav-link">Diseño</a>
+                        <a href="/store/<?= $store['slug'] ?>" class="nav-link" target="_blank">Ver Tienda</a>
+                        <a href="/logout" class="nav-link">Cerrar Sesión</a>
+                    </div>
+                </nav>
+                
+                <h1 style="color:white;">📋 Gestión de Pedidos</h1>
+                
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-number"><?= count($orders) ?></div>
+                        <div class="stat-label">Total Pedidos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?= count(array_filter($orders, fn($o) => ($o['status'] ?? '') === 'pending')) ?></div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?= count(array_filter($orders, fn($o) => ($o['status'] ?? '') === 'delivered')) ?></div>
+                        <div class="stat-label">Entregados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">$<?= number_format(array_sum(array_map(fn($o) => floatval($o['total'] ?? 0), $orders)), 2) ?></div>
+                        <div class="stat-label">Ventas Totales</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>📦 Pedidos Recientes</h2>
+                    <?php if (empty($orders)): ?>
+                        <div style="text-align:center;padding:3rem;">
+                            <h3>📭 No hay pedidos aún</h3>
+                            <p>Cuando recibas pedidos aparecerán aquí.</p>
+                            <a href="/store/<?= $store['slug'] ?>" target="_blank" class="btn">Ver mi Tienda</a>
+                        </div>
+                    <?php else: ?>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach (array_reverse($orders) as $order): ?>
+                                <tr>
+                                    <td>#<?= $order['id'] ?></td>
+                                    <td>
+                                        <strong><?= htmlspecialchars($order['customer_name'] ?? 'Cliente') ?></strong><br>
+                                        <small><?= htmlspecialchars($order['customer_email'] ?? '') ?></small>
+                                    </td>
+                                    <td>$<?= number_format($order['total'] ?? 0, 2) ?></td>
+                                    <td>
+                                        <span class="badge badge-<?= ($order['status'] ?? 'pending') === 'delivered' ? 'success' : 'warning' ?>">
+                                            <?= ucfirst($order['status'] ?? 'pending') ?>
+                                        </span>
+                                    </td>
+                                    <td><?= date('d/m/Y', strtotime($order['created_at'] ?? 'now')) ?></td>
+                                    <td>
+                                        <button class="btn" style="padding:0.25rem 0.75rem;font-size:0.875rem;">Ver Detalles</button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+    
+    // Editor de Diseño
+    if ($path === '/admin/design') {
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Diseño - <?= htmlspecialchars($store['name']) ?></title>
+            <?= $css ?>
+        </head>
+        <body>
+            <div class="container">
+                <nav class="navbar">
+                    <a href="/admin" class="logo">🏬 <?= htmlspecialchars($store['name']) ?></a>
+                    <div class="nav-links">
+                        <span class="nav-link">Hola, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                        <a href="/admin/products" class="nav-link">Productos</a>
+                        <a href="/admin/orders" class="nav-link">Pedidos</a>
+                        <a href="/admin/design" class="nav-link" style="background:rgba(255,255,255,0.2);">Diseño</a>
+                        <a href="/store/<?= $store['slug'] ?>" class="nav-link" target="_blank">Ver Tienda</a>
+                        <a href="/logout" class="nav-link">Cerrar Sesión</a>
+                    </div>
+                </nav>
+                
+                <h1 style="color:white;">🎨 Editor de Diseño</h1>
+                
+                <?php if (isset($success_message)): ?>
+                    <div class="alert alert-success"><?= $success_message ?></div>
+                <?php endif; ?>
+                
+                <div class="card">
+                    <h2>⚙️ Configuración de la Tienda</h2>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update_store">
+                        <div class="form-group">
+                            <label>Nombre de la Tienda</label>
+                            <input type="text" name="name" value="<?= htmlspecialchars($store['name']) ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <textarea name="description" rows="3"><?= htmlspecialchars($store['description'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Color Principal</label>
+                            <input type="color" name="theme_color" value="<?= htmlspecialchars($store['theme_color'] ?? '#667eea') ?>">
+                            <small>Este color se usará como tema principal de tu tienda</small>
+                        </div>
+                        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2>🔗 Enlace de tu Tienda</h2>
+                    <p>Comparte este enlace para que los clientes puedan comprar en tu tienda:</p>
+                    <div style="background:#f8fafc;padding:1rem;border-radius:6px;margin:1rem 0;font-family:monospace;font-size:1.1rem;">
+                        <strong>https://<?= $_SERVER['HTTP_HOST'] ?>/store/<?= $store['slug'] ?></strong>
+                    </div>
+                    <a href="/store/<?= $store['slug'] ?>" class="btn" target="_blank">Ver mi Tienda</a>
+                </div>
+                
+                <div class="card">
+                    <h2>📊 Vista Previa</h2>
+                    <p>Así se ve tu tienda actualmente:</p>
+                    <iframe src="/store/<?= $store['slug'] ?>" style="width:100%;height:400px;border:1px solid #e5e7eb;border-radius:8px;"></iframe>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+    
     ?>
     <!DOCTYPE html>
     <html lang="es">
