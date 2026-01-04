@@ -1,18 +1,40 @@
 <?php
 /**
- * MultiTienda - Entry Point
+ * MultiTienda - Diagnóstico completo
  */
 
-// Verificar que el backend existe
+echo "<h1>🔍 Diagnóstico MultiTienda</h1>";
+
+// 1. Verificar directorio backend
 $backendPath = __DIR__ . '/backend';
+echo "<p>✓ Ruta backend: " . $backendPath . "</p>";
+
 if (!is_dir($backendPath)) {
-    die('Error: Backend directory not found');
+    die('<p>❌ Error: Backend directory not found</p>');
 }
+echo "<p>✓ Directorio backend existe</p>";
 
-// Verificar que vendor existe
-if (!file_exists($backendPath . '/vendor/autoload.php')) {
-    die('Error: Laravel dependencies not installed. Run: cd backend && composer install');
+// 2. Verificar vendor
+$vendorPath = $backendPath . '/vendor/autoload.php';
+echo "<p>✓ Checking vendor: " . $vendorPath . "</p>";
+
+if (!file_exists($vendorPath)) {
+    die('<p>❌ Error: Laravel dependencies not installed</p><p>Necesitas ejecutar: cd backend && composer install</p>');
 }
+echo "<p>✓ Vendor autoload existe</p>";
 
-// Cargar Laravel directamente
-require_once $backendPath . '/public/index.php';
+// 3. Verificar Laravel bootstrap
+$bootstrapPath = $backendPath . '/bootstrap/app.php';
+if (!file_exists($bootstrapPath)) {
+    die('<p>❌ Error: Laravel bootstrap not found</p>');
+}
+echo "<p>✓ Laravel bootstrap existe</p>";
+
+// 4. Intentar cargar Laravel
+try {
+    echo "<p>🚀 Cargando Laravel...</p>";
+    require_once $backendPath . '/public/index.php';
+} catch (Exception $e) {
+    echo '<p>❌ Error cargando Laravel: ' . $e->getMessage() . '</p>';
+    echo '<pre>' . $e->getTraceAsString() . '</pre>';
+}
