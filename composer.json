@@ -1,0 +1,20 @@
+{
+    "name": "multitienda/production",
+    "description": "MultiTienda Production Deployment",
+    "type": "project",
+    "scripts": {
+        "post-install-cmd": [
+            "cd backend && composer install --no-dev --optimize-autoloader",
+            "cd backend && php artisan config:cache",
+            "cd backend && php artisan route:cache"
+        ],
+        "post-update-cmd": [
+            "cd backend && composer install --no-dev --optimize-autoloader",
+            "cd backend && php artisan config:cache", 
+            "cd backend && php artisan route:cache"
+        ]
+    },
+    "require": {
+        "php": "^8.1"
+    }
+}
