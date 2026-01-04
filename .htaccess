@@ -1,20 +1,4 @@
-RewriteEngine On
-
-# Redirigir todo al index.php principal
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-
-# Seguridad básica
-<FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
+# NADA - Solo seguridad básica
 <Files "*.env">
-    Deny from all
-</Files>
-
-<Files "composer.*">
     Deny from all
 </Files>

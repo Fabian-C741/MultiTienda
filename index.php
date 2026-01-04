@@ -1,26 +1,14 @@
 <?php
 /**
- * Entry Point para Hostinger con Git Deploy
- * 
- * Copia este archivo a public_html/index.php en Hostinger
- * El repositorio se clona en public_html/ directamente
+ * MultiTienda - Entry Point Directo
+ * Sin redirects, sin complicaciones
  */
 
-use Illuminate\Http\Request;
-
-define('LARAVEL_START', microtime(true));
-
-// Ruta base del backend Laravel (relativa a public_html)
+// Verificar que el backend existe
 $backendPath = __DIR__ . '/backend';
-
-// Maintenance mode
-if (file_exists($maintenance = $backendPath . '/storage/framework/maintenance.php')) {
-    require $maintenance;
+if (!is_dir($backendPath)) {
+    die('Error: Backend directory not found');
 }
 
-// Autoloader
-require $backendPath . '/vendor/autoload.php';
-
-// Bootstrap y manejar request
-(require_once $backendPath . '/bootstrap/app.php')
-    ->handleRequest(Request::capture());
+// Cargar Laravel directamente
+require_once $backendPath . '/public/index.php';
