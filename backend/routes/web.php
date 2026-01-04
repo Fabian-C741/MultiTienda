@@ -20,6 +20,11 @@ Route::get('/', function () {
     return redirect('/central/dashboard');
 });
 
+// Ruta de prueba simple
+Route::get('/central/dashboard', function () {
+    return '<h1>🎉 MultiTienda Funciona!</h1><p>Panel Central funcionando correctamente.</p><ul><li><a href="/tienda/demo">Tienda Demo</a></li><li><a href="/tienda/demo/admin">Admin Demo</a></li></ul>';
+});
+
 // Rutas centrales para gestión de tenants (sin contexto de tenant)
 Route::prefix('central')
     ->name('central.')
