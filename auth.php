@@ -3,7 +3,11 @@
  * 🔐 Sistema de Autenticación MultiTienda - JSON Storage
  */
 
-session_start();
+// Iniciar sesión solo si no está ya iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'storage.php';
 
 class Auth {

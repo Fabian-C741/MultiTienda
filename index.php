@@ -3,9 +3,36 @@
  * 🏪 MultiTienda Pro - Sistema Completo Multi-Tenant Moderno
  */
 
-require_once 'auth.php';
-require_once 'storage.php';
-require_once 'super-admin-functions.php';
+// Manejo de errores para producción
+if (getenv('APP_ENV') !== 'development') {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
+// Función de manejo de errores
+function handleError($error) {
+    error_log($error);
+    if (getenv('APP_ENV') === 'development') {
+        echo "<div style='background: #fee; color: #c33; padding: 1rem; border: 1px solid #fcc; border-radius: 4px; margin: 1rem;'>";
+        echo "<strong>Error de desarrollo:</strong> " . htmlspecialchars($error);
+        echo "</div>";
+    }
+}
+
+try {
+    require_once 'auth.php';
+    require_once 'storage.php';
+    require_once 'super-admin-functions.php';
+} catch (Exception $e) {
+    handleError($e->getMessage());
+    die('Error al cargar archivos del sistema');
+} catch (Error $e) {
+    handleError($e->getMessage());
+    die('Error fatal del sistema');
+}
 
 // Función para mostrar el layout base profesional
 function showLayout($title, $user, $content) {
