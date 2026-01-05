@@ -10,6 +10,18 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once 'storage.php';
 
+// Función global de manejo de errores
+if (!function_exists('handleError')) {
+    function handleError($error) {
+        error_log($error);
+        if (getenv('APP_ENV') === 'development' || $_GET['debug'] ?? false) {
+            echo "<div style='background: #fee; color: #c33; padding: 1rem; border: 1px solid #fcc; border-radius: 4px; margin: 1rem;'>";
+            echo "<strong>Error de desarrollo:</strong> " . htmlspecialchars($error);
+            echo "</div>";
+        }
+    }
+}
+
 class Auth {
     
     public function login($email, $password) {
