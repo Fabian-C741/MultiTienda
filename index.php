@@ -278,12 +278,15 @@ $path = rtrim($path, '/');
 if (empty($path) || $path === '/') {
     if (auth()->isLoggedIn()) {
         $user = auth()->getUser();
-        if ($user['role'] === 'super_admin') {
-            header('Location: /super-admin');
+        $redirectUrl = ($user['role'] === 'super_admin' ? '/super-admin' : '/admin');
+        
+        if (!headers_sent()) {
+            header('Location: ' . $redirectUrl);
+            exit;
         } else {
-            header('Location: /admin');
+            echo "<script>window.location.href = '$redirectUrl';</script>";
+            exit;
         }
-        exit;
     }
     
     include 'landing.html';
@@ -294,8 +297,15 @@ if (empty($path) || $path === '/') {
 if ($path === '/login') {
     if (auth()->isLoggedIn()) {
         $user = auth()->getUser();
-        header('Location: ' . ($user['role'] === 'super_admin' ? '/super-admin' : '/admin'));
-        exit;
+        $redirectUrl = ($user['role'] === 'super_admin' ? '/super-admin' : '/admin');
+        
+        if (!headers_sent()) {
+            header('Location: ' . $redirectUrl);
+            exit;
+        } else {
+            echo "<script>window.location.href = '$redirectUrl';</script>";
+            exit;
+        }
     }
     
     $error = null;
@@ -304,12 +314,27 @@ if ($path === '/login') {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
         
-        if (auth()->login($email, $password)) {
-            $user = auth()->getUser();
-            header('Location: ' . ($user['role'] === 'super_admin' ? '/super-admin' : '/admin'));
-            exit;
-        } else {
-            $error = 'Credenciales incorrectas';
+        try {
+            if (auth()->login($email, $password)) {
+                $user = auth()->getUser();
+                $redirectUrl = ($user['role'] === 'super_admin' ? '/super-admin' : '/admin');
+                
+                // Asegurar que no haya output antes del redirect
+                if (!headers_sent()) {
+                    header('Location: ' . $redirectUrl);
+                    exit;
+                } else {
+                    // Fallback si headers ya fueron enviados
+                    echo "<script>window.location.href = '$redirectUrl';</script>";
+                    echo "<p>Redirigiendo... <a href='$redirectUrl'>Click aquí si no redirige automáticamente</a></p>";
+                    exit;
+                }
+            } else {
+                $error = 'Credenciales incorrectas';
+            }
+        } catch (Exception $e) {
+            handleError('Error en login: ' . $e->getMessage());
+            $error = 'Error del sistema. Intente nuevamente.';
         }
     }
     ?>
