@@ -18,14 +18,17 @@ function showLayout($title, $user, $content) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
         <title><?= $title ?> - MultiTienda Pro</title>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
-        <link rel="stylesheet" href="enterprise-design.css">
-        <script src="analytics-engine.js"></script>
-        <script src="component-system.js"></script>
+        <link rel="stylesheet" href="enterprise-design.css?v=<?= time() ?>">
+        <script src="analytics-engine.js?v=<?= time() ?>"></script>
+        <script src="component-system.js?v=<?= time() ?>"></script>
     </head>
     <body>
         <div class="app">
